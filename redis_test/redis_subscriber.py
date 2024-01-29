@@ -1,6 +1,7 @@
 import asyncio
 import redis.asyncio as redis
-
+# pubsub vs queue
+# https://www.linkedin.com/pulse/pubsub-system-vs-queues-osama-ahmed/
 STOPWORD = "STOP"
 
 class RedisSubscriber:
