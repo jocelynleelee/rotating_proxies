@@ -12,7 +12,7 @@ async def consumer(redis, channel):
         # message = await redis.lindex(channel, 0)
         if message:
             message = message.decode()
-            # print("Retrieved message: {}".format(message))
+            print("Retrieved message: {}".format(message))
             # await redis.lpop(channel)
             if message == STOPWORD:
                 break
@@ -21,7 +21,7 @@ async def consumer(redis, channel):
 async def producer(redis, channel):
     for i in range(100):
         num = i
-        # print("Sending message number:  {}".format(num))
+        print("Sending message number:  {}".format(num))
         await redis.rpush(channel, num)
         # await asyncio.sleep(0.5)
     await redis.lpush(channel, STOPWORD)
@@ -29,7 +29,8 @@ async def main():
     redis_client = await redis.from_url("redis://localhost")
     channel = 'message_queue'
 
-    await asyncio.gather(consumer(redis_client, channel), producer(redis_client, channel))
+    await asyncio.gather(
+        consumer(redis_client, channel), producer(redis_client, channel))
 
     # redis_client.close()
     # await redis_client.wait_closed()
