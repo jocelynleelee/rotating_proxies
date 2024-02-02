@@ -1,9 +1,15 @@
 import asyncio
+import pydnsbl
 import redis.asyncio as redis
 
 CHANNEL = "chat"
 
 STOPWORD = "STOP"
+
+# def check_dnsbl_blocking(proxy_url):
+#     loop = asyncio.get_event_loop()
+#     ip_checker = pydnsbl.DNSBLIpChecker()
+#     return loop.run_in_executor(None, ip_checker.check, proxy_url)
 
 async def consumer(redis_url, stop_event):
     redis_client = await redis.from_url(redis_url)
@@ -13,7 +19,9 @@ async def consumer(redis_url, stop_event):
     while not stop_event.is_set():
         message = await pubsub.get_message(ignore_subscribe_messages=True)
         if message is not None:
-            # print(f"(Consumer) Message Received: {message}")
+            print(f"(Consumer) Message Received: {message}")
+            res = await validate(message["data"])
+            print(res)
             if message["data"].decode() == STOPWORD:
                 print("(Consumer) STOP")
                 stop_event.set()
@@ -22,8 +30,19 @@ async def consumer(redis_url, stop_event):
     pubsub.close()
     # await redis_client.wait_closed()
 
+async def validate(proxy_url):
+    import tracemalloc
+    tracemalloc.start()
+    url = "178.128.113.118"
+    try:
+        ip_checker = pydnsbl.DNSBLIpChecker()
+        res = await ip_checker.check_async(url)
+    except Exception as e:
+        print(str(e))
+    return res
+
 async def producer(redis):
-    for i in range(100000):
+    for i in range(10):
         num = i
         # print(f"(Producer) Message Sent: {num}")
         await redis.publish(CHANNEL, num)
@@ -32,7 +51,7 @@ async def producer(redis):
 
 async def main():
     redis_url = "redis://localhost"
-    num_subscribers = 10
+    num_subscribers = 1
 
     # Use an event to signal the stop condition
     stop_event = asyncio.Event()
